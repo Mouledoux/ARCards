@@ -28,45 +28,43 @@ public class WalkToClick : MonoBehaviour
     /// </summary>
     private Vector3 mTargetPos;
 
+    /// <summary>
+    /// Current distance to the target position
+    /// </summary>
+    private float mDistanceToTarget;
+
+    /// <summary>
+    /// Referance to animator
+    /// </summary>
+    private Animator animator;
+
+    void Start()
+    {
+        animator = GetComponent<Animator>();
+        mTargetPos = transform.position;
+    }
 
 	void Update ()
     {
         if(Input.GetMouseButton(0))
         {
-            Vector3 targetPos = Vector3.zero;
-            targetPos.y = transform.position.y;
+            float dist = Vector3.Distance(transform.position, Camera.main.transform.position);  // Distance to the main camera
 
-            Camera cam = Camera.main;               // Reference to main camera
-            Vector3 mousePos = Input.mousePosition; // Mouse posistoin at the time of clicking
+            Ray ray = Camera.main.ScreenPointToRay(Input.mousePosition);    // Shoots a ray in the direction of the click
+            mTargetPos = ray.origin + (ray.direction * dist);               // and sets the target to the return point
 
-            Vector3 screenCenter = Vector3.zero;    // Finding the center of the screen
-            screenCenter.x = Screen.width / 2;      //
-            screenCenter.y = Screen.height / 2;     //
+            mTargetPos.y = transform.position.y;                            // Adjust the Y so its always flat
 
-            mousePos = mousePos - screenCenter;     // Gets the click posistion relative to the center of the screens
+            transform.LookAt(mTargetPos);
+            animator.SetFloat("Speed", mSpeed);
+        }
 
-            Vector3 clickAngle = Vector3.zero;          // Angle of the clicked posistion
-            clickAngle.y = mousePos.y / screenCenter.y;
-            clickAngle.x = mousePos.x / screenCenter.x;
+        mDistanceToTarget = Vector3.Distance(transform.position, mTargetPos);
 
-            clickAngle.y *= (cam.fieldOfView * ((float)Screen.height / (float)Screen.width));
-            clickAngle.x *= (cam.fieldOfView);
 
-            Vector3 angleToClick = Vector3.zero;                                // Angle of the click to the object
-            angleToClick = cam.transform.eulerAngles - transform.eulerAngles;   // relative to cameras rotation to the object
-            angleToClick = angleToClick + clickAngle;                           // 
-
-            float camHeight = 0.0f;                                         // Cameras height from the object
-            camHeight = cam.transform.position.y - transform.position.y;    //
-
-            print(clickAngle);
-            clickAngle.x += cam.transform.position.x;
-            clickAngle.y += cam.transform.position.y;
-            clickAngle.z *= -1;
-
-            clickAngle += cam.transform.eulerAngles;
-
-            Debug.DrawRay(cam.transform.position, clickAngle * 10, Color.red);
+        if(mDistanceToTarget < mStoppingDistance)
+        {
+            animator.SetFloat("Speed", 0);
         }
 	}
 
