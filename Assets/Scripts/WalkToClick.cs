@@ -13,6 +13,7 @@ using UnityEngine;
 /// </summary>
 public class WalkToClick : MonoBehaviour
 {
+    #region Vairables
     /// <summary>
     /// Speed at which the entity moves at
     /// </summary>
@@ -38,34 +39,60 @@ public class WalkToClick : MonoBehaviour
     /// </summary>
     private Animator animator;
 
+    /// <summary>
+    /// If the object should be moving now.
+    /// </summary>
+    private bool canWalk;
+    #endregion
+
     void Start()
     {
         animator = GetComponent<Animator>();
         mTargetPos = transform.position;
+        canWalk = false;
     }
 
-	void Update ()
+    void Update()
     {
-        if(Input.GetMouseButton(0))
+        if (canWalk)
         {
-            float dist = Vector3.Distance(transform.position, Camera.main.transform.position);  // Distance to the main camera
+            transform.localPosition =
+                new Vector3(transform.localPosition.x, 0, transform.localPosition.z);   // Makes sure that the object never leaves its plane
 
-            Ray ray = Camera.main.ScreenPointToRay(Input.mousePosition);    // Shoots a ray in the direction of the click
-            mTargetPos = ray.origin + (ray.direction * dist);               // and sets the target to the return point
 
-            mTargetPos.y = transform.position.y;                            // Adjust the Y so its always flat
+            if (Input.GetMouseButton(0))
+            {
+                float dist = Vector3.Distance(transform.position, Camera.main.transform.position);  // Distance to the main camera
 
-            transform.LookAt(mTargetPos);
-            animator.SetFloat("Speed", mSpeed);
+                Ray ray = Camera.main.ScreenPointToRay(Input.mousePosition);    // Shoots a ray in the direction of the click
+                mTargetPos = ray.origin + (ray.direction * dist);               // and sets the target to the return point
+
+                mTargetPos.y = transform.position.y;    // Adjust the Y so its always flat
+
+                animator.SetFloat("Speed", mSpeed);     // Walk there via animation
+            }
+
+            mDistanceToTarget = Vector3.Distance(transform.position, mTargetPos);
+
+            if (mDistanceToTarget < mStoppingDistance)
+            {
+                animator.SetFloat("Speed", 0);
+            }
+            else
+            {
+                transform.LookAt(mTargetPos);           // Has this object look at the target position
+                print("Look");
+            }
         }
+    }
 
-        mDistanceToTarget = Vector3.Distance(transform.position, mTargetPos);
+    void OnBecameVisible()
+    {
+        canWalk = true;
+    }
 
-
-        if(mDistanceToTarget < mStoppingDistance)
-        {
-            animator.SetFloat("Speed", 0);
-        }
-	}
-
+    void OnBecameInvisible()
+    {
+        canWalk = false;
+    }
 }
